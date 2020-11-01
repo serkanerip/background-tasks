@@ -11,7 +11,7 @@ namespace BackgroundTasks.BackgroundTask
         public BackgroundJobRunner()
         {
             _storage.SubscribeToEnqueue(RunImmediateJobs);
-            _storage.SubscribeToNewScheluder(SetTimersForScheludedJobs);
+            _storage.SubscribeToNewScheduled(SetTimersForScheludedJobs);
             RunImmediateJobs();
             SetTimersForScheludedJobs();
         }
@@ -26,7 +26,7 @@ namespace BackgroundTasks.BackgroundTask
 
         private void SetTimersForScheludedJobs()
         {
-            var jobs = _storage.GetScheludedJobs();
+            var jobs = _storage.GetScheduledJobs();
             jobs.FindAll(job => job.Timer == null).ForEach(job =>
             {
                 var millis = (job.TargetTime - DateTime.Now).TotalMilliseconds;
@@ -34,7 +34,7 @@ namespace BackgroundTasks.BackgroundTask
                 timer.Elapsed += (sender, args) =>
                 {
                     job.Status = "Started";
-                    _storage.RemoveScheludedJob(job.Id);
+                    _storage.RemoveScheduledJob(job.Id);
                     try
                     {
                         job.Task.Start();
@@ -60,7 +60,7 @@ namespace BackgroundTasks.BackgroundTask
 
         private void HandleScheludedJobs()
         {
-            var jobs = _storage.GetScheludedJobs();
+            var jobs = _storage.GetScheduledJobs();
             if (jobs.Count < 1) return;
             jobs.ForEach(job =>
             {
@@ -70,7 +70,7 @@ namespace BackgroundTasks.BackgroundTask
                     Id = job.Id,
                     Task = job.Task
                 }));
-                _storage.RemoveScheludedJob(job.Id);
+                _storage.RemoveScheduledJob(job.Id);
             });
         }
 

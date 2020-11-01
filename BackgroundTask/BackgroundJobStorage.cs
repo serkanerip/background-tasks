@@ -10,19 +10,19 @@ namespace BackgroundTasks.BackgroundTask
         private static BackgroundJobStorage _instance;
         private readonly Queue<Job> _tasks;
         private readonly List<Job> _failedJobs;
-        private readonly List<ScheludedJob> _scheludedJobs;
+        private readonly List<ScheduledJob> _scheduledJobs;
         private readonly List<Action> _enqueuSubs;
-        private readonly List<Action> _scheludeSubs;
+        private readonly List<Action> _scheduleSubs;
 
         public List<Job> FailedJobs => _failedJobs;
 
         private BackgroundJobStorage ()
         {
-            _scheludedJobs = new List<ScheludedJob>();
+            _scheduledJobs = new List<ScheduledJob>();
             _tasks = new Queue<Job>();
             _failedJobs = new List<Job>();
             _enqueuSubs = new List<Action>();
-            _scheludeSubs = new List<Action>();
+            _scheduleSubs = new List<Action>();
         }
 
         public void SubscribeToEnqueue(Action action)
@@ -30,16 +30,16 @@ namespace BackgroundTasks.BackgroundTask
             _enqueuSubs.Add(action);
         }
 
-        public List<ScheludedJob> GetScheludedJobs()
+        public List<ScheduledJob> GetScheduledJobs()
         {
-            return _scheludedJobs;
+            return _scheduledJobs;
         }
 
-        public void RemoveScheludedJob(string id)
+        public void RemoveScheduledJob(string id)
         {
-            lock (_scheludedJobs)
+            lock (_scheduledJobs)
             {
-                _scheludedJobs.Remove(_scheludedJobs.Find(j => j.Id == id));    
+                _scheduledJobs.Remove(_scheduledJobs.Find(j => j.Id == id));    
             }
         }
 
@@ -104,22 +104,22 @@ namespace BackgroundTasks.BackgroundTask
             Enqueu(job);
         }
 
-        public ScheludedJob AddScheludedJob(Task task, TimeSpan delay)
+        public ScheduledJob AddScheduledJob(Task task, TimeSpan delay)
         {
-            var job = new ScheludedJob()
+            var job = new ScheduledJob()
             {
                 Id = GenerateId(),
                 Task =  task,
                 TargetTime = DateTime.Now.Add(delay)
             };
-            _scheludedJobs.Add(job);
-            _scheludeSubs.ForEach(action => action.Invoke());
+            _scheduledJobs.Add(job);
+            _scheduleSubs.ForEach(action => action.Invoke());
             return job;
         }
 
-        public void SubscribeToNewScheluder(Action action)
+        public void SubscribeToNewScheduled(Action action)
         {
-            _scheludeSubs.Add(action);
+            _scheduleSubs.Add(action);
         }
     }
 }
